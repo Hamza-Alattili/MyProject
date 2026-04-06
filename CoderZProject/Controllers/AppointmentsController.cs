@@ -73,10 +73,17 @@ namespace CoderZProject.Controllers
                 return Unauthorized("Invalid user ID in token.");
             }
 
-            // Need to map currentUserId to DoctorId. This assumes User.Id == Doctor.Id, which might not be true.
-            // A more robust solution would involve a DoctorProfile linked to User.Id.
-            // For now, let's assume currentUserId is the DoctorId for simplicity.
-            if (currentUserId != doctorId && !User.IsInRole("Admin"))
+            // If user is Admin, they can see everything
+            if (User.IsInRole("Admin"))
+            {
+                var adminAppointments = await _appointmentService.GetAppointmentsByDoctorIdAsync(doctorId);
+                return Ok(adminAppointments);
+            }
+
+            // If user is a Doctor, we must ensure they are requesting their own ID
+            // In a real system, we'd look up the Doctor entity by UserId to get the correct DoctorId
+            // For now, we'll keep the logic but note the need for a Doctor-User mapping check if DoctorId != UserId
+            if (currentUserId != doctorId)
             {
                 return Forbid("You can only view your own appointments.");
             }
