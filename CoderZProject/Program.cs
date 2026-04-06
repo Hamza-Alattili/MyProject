@@ -5,9 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Application.Services.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<IAuthService, Application.Services.AuthService>();
+builder.Services.AddScoped<IDoctorService, Application.Services.DoctorService>();
+builder.Services.AddScoped<IAppointmentService, Application.Services.AppointmentService>();
 
 // Add services to the container.
 
@@ -69,6 +73,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+using(var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<Infrastructure.Context.ProjectDbContext>();
+    await Infrastructure.Data.UserSeedData.InitializeAsync(context);
+}
 
 app.Run();
